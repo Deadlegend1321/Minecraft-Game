@@ -18,7 +18,7 @@ class GameMethods{
   }
 
   int get freeArea{
-    return (chunkHeight * 0.2).toInt();
+    return (chunkHeight * 0.4).toInt();
   }
 
   int get maxSecondarySoilExtent{
@@ -31,6 +31,10 @@ class GameMethods{
 
   int get currentChunkIndex{
     return playerXIndexPosition >= 0 ? playerXIndexPosition~/chunkWidth : (playerXIndexPosition~/chunkWidth) - 1;
+  }
+
+  double get gravity{
+    return blockSize.x * 0.8;
   }
 
   Size getScreenSize(){
@@ -87,5 +91,22 @@ class GameMethods{
       });
     }
     return chunk;
+  }
+
+  List<List<int>> processNoise(List<List<double>> rawNoise){
+    List<List<int>> processedNoise =
+    List.generate(
+        rawNoise.length, (index) => List.generate(
+        rawNoise[0].length, (index) => 255
+    )
+    );
+    for (var x = 0; x < rawNoise.length; x++) {
+      for (var y = 0; y < rawNoise[0].length; y++) {
+        int value = (0x80 + 0x80 * rawNoise[x][y]).floor(); // grayscale
+        processedNoise[x][y] = value;
+       // image.setPixelRgba(x, y, value, value, value, 0xff);
+      }
+    }
+    return processedNoise;
   }
 }

@@ -1,27 +1,53 @@
+import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flame/flame.dart';
 import 'package:flame/sprite.dart';
 import 'package:minecraft/global/global_game_reference.dart';
 import 'package:minecraft/global/player_data.dart';
+import 'package:minecraft/utils/constants.dart';
 import 'package:minecraft/utils/game_methods.dart';
 
-class PlayerComponent extends SpriteAnimationComponent{
+class PlayerComponent extends SpriteAnimationComponent with CollisionCallbacks{
 
   final Vector2 playerDimensions = Vector2.all(60);
   final double stepTime = 0.3;
-  final double speed = 5;
   bool isFacingRight = true;
+  double yVelocity = 0;
 
   late SpriteSheet playerWalkingSpriteSheet;
   late SpriteSheet playerIdleSpriteSheet;
 
   late SpriteAnimation walkingAnimation = playerWalkingSpriteSheet.createAnimation(row: 0, stepTime: stepTime);
   late SpriteAnimation idleAnimation = playerIdleSpriteSheet.createAnimation(row: 0, stepTime: stepTime);
+  bool isCollidingBottom = false;
+  bool isCollidingLeft = false;
+  bool isCollidingRight = false;
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    intersectionPoints.forEach((Vector2 individualIntersectionPoint) {
+      if(individualIntersectionPoint.y > (position.y - (size.y *0.3)) &&
+          (intersectionPoints.first.x - intersectionPoints.last.x).abs() > (size.x * 0.4)){
+        isCollidingBottom = true;
+      }
+      if(individualIntersectionPoint.y < (position.y - (size.y *0.3))){
+        if(individualIntersectionPoint.x > position.x){
+          isCollidingRight = true;
+        }
+        else{
+          isCollidingLeft = true;
+        }
+      }
+    });
+  }
 
 
   @override
   Future<void> onLoad() async {
     super.onLoad();
+
+    add(RectangleHitbox());
 
     priority = 2;
     anchor = Anchor.bottomCenter;
@@ -40,29 +66,67 @@ class PlayerComponent extends SpriteAnimationComponent{
   @override
   void update(double dt){
     super.update(dt);
-    movementLogic();
+    movementLogic(dt);
+    fallingLogic(dt);
+    setAllCollisionToFalse();
   }
 
-  void movementLogic(){
+  void fallingLogic(double dt){
+    if(!isCollidingBottom){
+      if(yVelocity < (GameMethods.instance.gravity * dt) * 5){
+        position.y += yVelocity;
+        yVelocity += GameMethods.instance.gravity * dt;
+      }
+      else{
+        position.y += yVelocity;
+      }
+    }
+  }
+
+  void setAllCollisionToFalse(){
+    isCollidingBottom = false;
+    isCollidingLeft = false;
+    isCollidingRight = false;
+  }
+
+  void move(ComponentMotionState componentMotionState, double dt){
+    switch(componentMotionState){
+      case ComponentMotionState.walkingLeft:
+        if(!isCollidingLeft){
+          position.x -= (playerSpeed * GameMethods.instance.blockSize.x) * dt;
+        }
+        if(isFacingRight){
+          flipHorizontallyAroundCenter();
+          isFacingRight = false;
+        }
+        animation = walkingAnimation;
+        break;
+      case ComponentMotionState.walkingRight:
+        if(!isCollidingRight){
+          position.x += (playerSpeed * GameMethods.instance.blockSize.x) * dt;
+        }
+        if(!isFacingRight){
+          flipHorizontallyAroundCenter();
+          isFacingRight = true;
+        }
+        animation = walkingAnimation;
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  void movementLogic(double dt){
     if(
     GlobalGameReference.instance.gameReference.worldData.playerData.componentMotionState
         == ComponentMotionState.walkingLeft){
-      position.x -= speed;
-      if(isFacingRight){
-        flipHorizontallyAroundCenter();
-        isFacingRight = false;
-      }
-      animation = walkingAnimation;
+      move(ComponentMotionState.walkingLeft, dt);
     }
     if(
     GlobalGameReference.instance.gameReference.worldData.playerData.componentMotionState
         == ComponentMotionState.walkingRight){
-      position.x += speed;
-      if(!isFacingRight){
-        flipHorizontallyAroundCenter();
-        isFacingRight = true;
-      }
-      animation = walkingAnimation;
+      move(ComponentMotionState.walkingRight, dt);
     }
     if(
     GlobalGameReference.instance.gameReference.worldData.playerData.componentMotionState

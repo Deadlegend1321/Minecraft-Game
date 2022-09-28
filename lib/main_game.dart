@@ -10,7 +10,7 @@ import 'package:minecraft/utils/game_methods.dart';
 
 import 'components/block_component.dart';
 
-class MainGame extends FlameGame{
+class MainGame extends FlameGame with HasCollisionDetection{
   final WorldData worldData;
 
 
@@ -42,7 +42,7 @@ class MainGame extends FlameGame{
         if(block != null){
           add(BlockComponent(block: block,
               blockIndex: Vector2((chunkIndex * chunkWidth) + xIndex.toDouble(),
-                  yIndex.toDouble()),
+                  yIndex.toDouble() + 15),
             chunkIndex: chunkIndex
           ));
         }
