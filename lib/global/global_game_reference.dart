@@ -1,11 +1,10 @@
-import 'package:minecraft/main_game.dart';
 import 'package:get/get.dart';
+import 'package:minecraft/main_game.dart';
 
-
-class GlobalGameReference{
+class GlobalGameReference {
   late MainGame gameReference;
 
-  static GlobalGameReference get instance{
+  static GlobalGameReference get instance {
     return Get.put(GlobalGameReference());
   }
 }

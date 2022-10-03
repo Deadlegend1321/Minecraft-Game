@@ -39,6 +39,9 @@ dependencies:
   flame: ^1.1.1
   get:
   fast_noise:
+  hive:
+  hive_flutter:
+  panorama: ^0.4.1
 
 dev_dependencies:
   flutter_test:
